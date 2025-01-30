@@ -1,22 +1,15 @@
 package ink.ptms.adyeshach.impl.nmsj17
 
-import ink.ptms.adyeshach.api.dataserializer.createDataSerializer
 import ink.ptms.adyeshach.core.Adyeshach
 import ink.ptms.adyeshach.core.MinecraftMeta
 import ink.ptms.adyeshach.core.bukkit.data.GameProfile
 import ink.ptms.adyeshach.core.bukkit.data.GameProfileAction
 import ink.ptms.adyeshach.core.entity.type.AdySniffer
-import ink.ptms.adyeshach.impl.nms.CraftMagicNumbers19
 import ink.ptms.adyeshach.impl.nms.NMSDataWatcherItem
 import ink.ptms.adyeshach.impl.nms.NMSDataWatcherObject
-import io.netty.handler.codec.EncoderException
-import net.minecraft.SystemUtils
+import net.minecraft.core.Holder
 import net.minecraft.core.IRegistry
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.nbt.DynamicOpsNBT
-import net.minecraft.nbt.NBTCompressedStreamTools
-import net.minecraft.network.PacketDataSerializer
-import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.network.chat.IChatBaseComponent
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
@@ -34,7 +27,9 @@ import org.joml.Quaternionf
 import org.joml.Vector3f
 import taboolib.common5.Quat
 import taboolib.common5.cfloat
+import taboolib.library.reflex.Reflex.Companion.invokeConstructor
 import taboolib.module.nms.MinecraftVersion
+import taboolib.module.nms.dataSerializerBuilder
 import java.util.*
 
 /**
@@ -83,14 +78,14 @@ class NMSJ17Impl : NMSJ17() {
     override fun createBlockStateMeta(index: Int, materialData: MaterialData): Any {
         return NMSDataWatcherItem(
             NMSDataWatcherObject(index, DataWatcherRegistry.BLOCK_STATE),
-            CraftMagicNumbers19.getBlock(materialData)
+            CraftMagicNumbers21.getBlock(materialData)
         )
     }
 
     override fun createOptBlockStateMeta(index: Int, materialData: MaterialData?): Any {
         return NMSDataWatcherItem(
             NMSDataWatcherObject(index, DataWatcherRegistry.OPTIONAL_BLOCK_STATE),
-            Optional.ofNullable(if (materialData == null) null else CraftMagicNumbers19.getBlock(materialData))
+            Optional.ofNullable(if (materialData == null) null else CraftMagicNumbers21.getBlock(materialData))
         )
     }
 
@@ -98,7 +93,7 @@ class NMSJ17Impl : NMSJ17() {
         val ir = BuiltInRegistries.CAT_VARIANT as IRegistry<CatVariant>
         val texture = "textures/entity/cat/${type.name.lowercase()}.png"
         val variant = ir.first { it.texture.path == texture }
-        return DataWatcher.Item(DataWatcherObject(index, DataWatcherRegistry.CAT_VARIANT), variant)
+        return DataWatcher.Item(DataWatcherObject(index, DataWatcherRegistry.CAT_VARIANT), Holder.direct(variant))
     }
 
     override fun createSnifferStateMeta(index: Int, type: AdySniffer.State): Any {
@@ -120,7 +115,7 @@ class NMSJ17Impl : NMSJ17() {
         // 转换为数据包对象
         val a = EnumSet.copyOf(actions.map { createClientboundPlayerInfoUpdatePacketAction(it) as ClientboundPlayerInfoUpdatePacket.a })
         // 创建数据包
-        return ClientboundPlayerInfoUpdatePacket(createDataSerializer {
+        return ClientboundPlayerInfoUpdatePacket::class.java.invokeConstructor(dataSerializerBuilder {
             writeEnumSet(a, ClientboundPlayerInfoUpdatePacket.a::class.java)
             writeVarInt(1)
             writeUUID(uuid)
@@ -146,28 +141,32 @@ class NMSJ17Impl : NMSJ17() {
                     // 玩家名称
                     ClientboundPlayerInfoUpdatePacket.a.UPDATE_DISPLAY_NAME -> {
                         writeNullable(gameProfile.name) {
-                            // 1.20.4+
-                            // writeWithCodec(DynamicOpsNBT.INSTANCE, ComponentSerialization.CODEC, var0);
-                            if (MinecraftVersion.majorLegacy >= 12004) {
-                                val component = Adyeshach.api().getMinecraftAPI().getHelper().literalChatBaseComponent(it)
-                                val nbt = SystemUtils.getOrThrow(ComponentSerialization.CODEC.encodeStart(DynamicOpsNBT.INSTANCE, component as IChatBaseComponent)) {
-                                    EncoderException("Failed to encode: $it")
-                                }
-                                NBTCompressedStreamTools.writeAnyTag(nbt, dataOutput())
-                            }
-                            // 1.20.4-
-                            // writeUtf(ChatSerializer.toJson(var0), 262144);
-                            else {
-                                val component = Adyeshach.api().getMinecraftAPI().getHelper().literalChatBaseComponent(it)
-                                val json = Adyeshach.api().getMinecraftAPI().getHelper().craftChatSerializerToJson(component)
-                                writeUtf(json, 262144)
-                            }
+                            val helper = Adyeshach.api().getMinecraftAPI().getHelper()
+                            val component = helper.literalChatBaseComponent(it)
+                            val json = helper.craftChatSerializerToJson(component)
+                            writeComponent(json)
+//                            // 1.20.4+
+//                            // writeWithCodec(DynamicOpsNBT.INSTANCE, ComponentSerialization.CODEC, var0);
+//                            if (MinecraftVersion.majorLegacy >= 12004) {
+//                                val component = Adyeshach.api().getMinecraftAPI().getHelper().literalChatBaseComponent(it)
+//                                val nbt = SystemUtils.getOrThrow(ComponentSerialization.CODEC.encodeStart(DynamicOpsNBT.INSTANCE, component as IChatBaseComponent)) {
+//                                    EncoderException("Failed to encode: $it")
+//                                }
+//                                NBTCompressedStreamTools.writeAnyTag(nbt, dataOutput())
+//                            }
+//                            // 1.20.4-
+//                            // writeUtf(ChatSerializer.toJson(var0), 262144);
+//                            else {
+//                                val component = Adyeshach.api().getMinecraftAPI().getHelper().literalChatBaseComponent(it)
+//                                val json = Adyeshach.api().getMinecraftAPI().getHelper().craftChatSerializerToJson(component)
+//                                writeUtf(json, 262144)
+//                            }
                         }
                     }
                     else -> error("Unsupported action: $action")
                 }
             }
-        }.toNMS() as PacketDataSerializer)
+        }.build())
     }
 
     override fun createClientboundPlayerInfoRemovePacket(uuid: UUID): Any {
@@ -190,6 +189,31 @@ class NMSJ17Impl : NMSJ17() {
         val latency = gameProfile.ping
         val gameMode = if (gameProfile.spectator) EnumGamemode.SPECTATOR else EnumGamemode.CREATIVE
         val displayName = Adyeshach.api().getMinecraftAPI().getHelper().literalChatBaseComponent(gameProfile.name) as IChatBaseComponent
-        return ClientboundPlayerInfoUpdatePacket.b(uuid, gameProfile.toMojang(uuid), listed, latency, gameMode, displayName, null)
+        return if (MinecraftVersion.versionId >= 12104) {
+            ClientboundPlayerInfoUpdatePacket.b(
+                uuid,
+                gameProfile.toMojang(uuid),
+                listed,
+                latency,
+                gameMode,
+                displayName,
+                gameProfile.showHat,
+                0,
+                null
+            )
+        } else {
+            ClientboundPlayerInfoUpdatePacket.b::class.java.invokeConstructor(
+                uuid,
+                gameProfile.toMojang(uuid),
+                listed,
+                latency,
+                gameMode,
+                displayName,
+                null
+            )
+        }
     }
 }
+
+// 1.21.4
+typealias CraftMagicNumbers21 = org.bukkit.craftbukkit.v1_21_R3.util.CraftMagicNumbers

@@ -1,7 +1,7 @@
 package ink.ptms.adyeshach.impl.nms
 
-import ink.ptms.adyeshach.api.dataserializer.DataSerializer
-import ink.ptms.adyeshach.api.dataserializer.createDataSerializer
+import taboolib.module.nms.DataSerializer
+import taboolib.module.nms.createDataSerializer
 import ink.ptms.adyeshach.core.Adyeshach
 import ink.ptms.adyeshach.core.MinecraftEntityPlayerHandler
 import ink.ptms.adyeshach.core.MinecraftPacketHandler
@@ -52,14 +52,14 @@ class DefaultMinecraftEntityPlayerHandler : MinecraftEntityPlayerHandler {
         else if (isUniversal) {
             packetHandler.sendPacket(player, NMSPacketPlayOutPlayerInfo(createDataSerializer {
                 writeAddProfileLegacy(uuid, gameProfile, majorLegacy >= 11900)
-            }.toNMS() as NMSPacketDataSerializer))
+            }.build() as NMSPacketDataSerializer))
         }
         // 1.9 ~ 1.16
         else {
             packetHandler.sendPacket(player, NMS16PacketPlayOutPlayerInfo().also {
                 it.a(createDataSerializer {
                     writeAddProfileLegacy(uuid, gameProfile)
-                }.toNMS() as NMS16PacketDataSerializer)
+                }.build() as NMS16PacketDataSerializer)
             })
         }
     }
@@ -74,14 +74,14 @@ class DefaultMinecraftEntityPlayerHandler : MinecraftEntityPlayerHandler {
         else if (isUniversal) {
             packetHandler.sendPacket(player, NMSPacketPlayOutPlayerInfo(createDataSerializer {
                 writeRemoveProfile(uuid)
-            }.toNMS() as NMSPacketDataSerializer))
+            }.build() as NMSPacketDataSerializer))
         }
         // 1.9 ~ 1.16
         else {
             packetHandler.sendPacket(player, NMS16PacketPlayOutPlayerInfo().also {
                 it.a(createDataSerializer {
                     writeRemoveProfile(uuid)
-                }.toNMS() as NMS16PacketDataSerializer)
+                }.build() as NMS16PacketDataSerializer)
             })
         }
     }

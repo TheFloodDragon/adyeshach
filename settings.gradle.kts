@@ -1,11 +1,10 @@
 rootProject.name = "Adyeshach"
 
 include("plugin")
-include("project:api-data-serializer")
-//include("project:api-alkaid-mongodb")
 include("project:common")
 include("project:common-impl")
 include("project:common-impl-nms")
+include("project:common-impl-nms-12104")
 include("project:common-impl-nms-j17")
 include("project:common-impl-nms-paper-1.19.4")
 include("project:common-impl-nms-paper-1.20")

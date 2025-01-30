@@ -1,6 +1,6 @@
 package ink.ptms.adyeshach.impl.nms
 
-import ink.ptms.adyeshach.api.dataserializer.createDataSerializer
+import taboolib.module.nms.createDataSerializer
 import ink.ptms.adyeshach.core.*
 import ink.ptms.adyeshach.core.bukkit.BukkitParticles
 import ink.ptms.adyeshach.core.bukkit.BukkitPose
@@ -19,6 +19,7 @@ import org.bukkit.util.EulerAngle
 import org.bukkit.util.Vector
 import taboolib.common.platform.function.warning
 import taboolib.common5.Quat
+import taboolib.library.reflex.Reflex.Companion.invokeConstructor
 import taboolib.module.nms.MinecraftVersion
 import taboolib.module.nms.MinecraftVersion.isUniversal
 import java.util.*
@@ -106,14 +107,14 @@ class DefaultMinecraftEntityMetadataHandler : MinecraftEntityMetadataHandler {
         } else if (isUniversal) {
             NMSPacketPlayOutEntityMetadata(createDataSerializer {
                 writeVarInt(entityId)
-                writeMetadata(metaList)
-            }.toNMS() as NMSPacketDataSerializer)
+                writeMetadataLegacy(metaList.map { it.source() })
+            }.build() as NMSPacketDataSerializer)
         } else {
             NMS16PacketPlayOutEntityMetadata().also {
                 it.a(createDataSerializer {
                     writeVarInt(entityId)
-                    writeMetadata(metaList)
-                }.toNMS() as NMS16PacketDataSerializer)
+                    writeMetadataLegacy(metaList.map { it.source() })
+                }.build() as NMS16PacketDataSerializer)
             }
         }
     }
