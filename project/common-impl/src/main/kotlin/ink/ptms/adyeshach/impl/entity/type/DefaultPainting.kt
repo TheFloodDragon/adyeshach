@@ -74,7 +74,6 @@ abstract class DefaultPainting(entityTypes: EntityTypes) : DefaultEntity(entityT
         }
     }
 
-    @Suppress("SpellCheckingInspection")
     override fun setCustomMeta(key: String, value: String?): Boolean {
         super.setCustomMeta(key, value).ifTrue { return true }
         return when (key) {
