@@ -78,6 +78,6 @@ class PrepareMetaTypeCustom(val type: CustomType) : PrepareMetaType {
     }
 
     private fun parseParticle(args: List<String>): BukkitParticles {
-        return BukkitParticles::class.java.getEnumOrNull(args[1]) ?: BukkitParticles.HAPPY_VILLAGER
+        return BukkitParticles::class.java.getEnumOrNull(args[1]) ?: BukkitParticles.VILLAGER_HAPPY
     }
 }

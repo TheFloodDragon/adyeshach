@@ -5,7 +5,7 @@ import ink.ptms.adyeshach.core.*
 import ink.ptms.adyeshach.core.bukkit.BukkitDirection
 import ink.ptms.adyeshach.core.bukkit.BukkitPaintings
 import ink.ptms.adyeshach.core.entity.EntityTypes
-import ink.ptms.adyeshach.impl.nmsj17.NMSJ17
+import ink.ptms.adyeshach.impl.nms.specific.NMS19
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -133,13 +133,13 @@ class DefaultMinecraftEntitySpawner : MinecraftEntitySpawner {
                             0, 1, 2 -> writeVarInt(NMSIRegistry.ENTITY_TYPE.getId(helper.adapt(entityType) as NMSEntityTypes<*>))
                             // 1.19.3, 1.19.4       -> this.type = (EntityTypes)var0.readById(BuiltInRegistries.ENTITY_TYPE);
                             // 注意从该版本开始 RegistryBlocks 的类型发生变化，无法在同一个模块内向下兼容
-                            3, 4 -> writeVarInt(NMSJ17.instance.entityTypeGetId(helper.adapt(entityType)))
+                            3, 4 -> writeVarInt(NMS19.instance.entityTypeGetId(helper.adapt(entityType)))
                             // 其他版本 -> error
                             else -> error("Unsupported version.")
                         }
                     }
                     // 1.12
-                    12 -> writeVarInt(NMSJ17.instance.entityTypeGetId(helper.adapt(entityType)))
+                    12 -> writeVarInt(NMS19.instance.entityTypeGetId(helper.adapt(entityType)))
                 }
                 writeDouble(location.x)
                 writeDouble(location.y)

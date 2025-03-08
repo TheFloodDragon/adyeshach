@@ -165,5 +165,5 @@ internal fun ModelEngine.createModel() {
 
 internal fun ModelEngine.getDummy(): EntityModeled? {
     this as EntityInstance
-    return getTag("ModelEngine:EntityModeled")!! as? EntityModeled
+    return getTag("ModelEngine:EntityModeled") as? EntityModeled
 }

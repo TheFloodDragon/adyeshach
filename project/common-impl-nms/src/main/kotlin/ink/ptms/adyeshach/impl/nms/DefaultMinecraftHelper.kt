@@ -7,8 +7,8 @@ import ink.ptms.adyeshach.core.bukkit.BukkitPaintings
 import ink.ptms.adyeshach.core.bukkit.BukkitParticles
 import ink.ptms.adyeshach.core.entity.EntityTypes
 import ink.ptms.adyeshach.core.util.errorBy
-import ink.ptms.adyeshach.impl.nmspaper.NMSPaper11904
-import ink.ptms.adyeshach.impl.nmspaper.NMSPaper12000
+import ink.ptms.adyeshach.impl.nms.specific.NMS19p
+import ink.ptms.adyeshach.impl.nms.specific.NMS20p
 import ink.ptms.adyeshach.minecraft.ChunkPos
 import org.bukkit.Location
 import org.bukkit.World
@@ -154,13 +154,13 @@ class DefaultMinecraftHelper : MinecraftHelper {
         }
         // 你改你妈个🥚，我爱说实话
         try {
-            return NMSPaper12000.instance.isChunkSent(player, chunkX, chunkZ)
+            return NMS20p.instance.isChunkSent(player, chunkX, chunkZ)
         } catch (_: Throwable) {
         }
         // 你改你妈个🥚，我爱说实话
         try {
             val craftWorld = player.world as CraftWorld19
-            return NMSPaper11904.instance.isChunkSent(player, craftWorld.handle.chunkSource.chunkMap, chunkX, chunkZ)
+            return NMS19p.instance.isChunkSent(player, craftWorld.handle.chunkSource.chunkMap, chunkX, chunkZ)
         } catch (_: Throwable) {
         }
         return try {

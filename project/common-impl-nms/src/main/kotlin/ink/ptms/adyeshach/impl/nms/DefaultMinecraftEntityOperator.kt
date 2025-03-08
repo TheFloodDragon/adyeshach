@@ -5,17 +5,11 @@ import taboolib.module.nms.createDataSerializer
 import ink.ptms.adyeshach.core.*
 import ink.ptms.adyeshach.core.bukkit.BukkitAnimation
 import ink.ptms.adyeshach.core.util.ifloor
-import ink.ptms.adyeshach.impl.nmsj17.NMSJ17
-import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.world.effect.MobEffectList
-import net.minecraft.world.effect.MobEffects
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
-import org.bukkit.potion.PotionEffectType
 import org.bukkit.util.Vector
-import taboolib.common.platform.function.info
 import taboolib.module.nms.MinecraftVersion
 
 /**

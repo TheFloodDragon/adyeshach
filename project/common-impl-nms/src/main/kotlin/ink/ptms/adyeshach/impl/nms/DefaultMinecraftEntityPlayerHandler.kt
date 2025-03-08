@@ -7,7 +7,7 @@ import ink.ptms.adyeshach.core.MinecraftEntityPlayerHandler
 import ink.ptms.adyeshach.core.MinecraftPacketHandler
 import ink.ptms.adyeshach.core.bukkit.data.GameProfile
 import ink.ptms.adyeshach.core.bukkit.data.GameProfileAction
-import ink.ptms.adyeshach.impl.nmsj17.NMSJ17
+import ink.ptms.adyeshach.impl.nms.specific.NMS19
 import org.bukkit.entity.Player
 import taboolib.module.nms.MinecraftVersion
 import java.util.*
@@ -46,7 +46,7 @@ class DefaultMinecraftEntityPlayerHandler : MinecraftEntityPlayerHandler {
         // 1.19.3
         // PacketPlayOutPlayerInfo 变更为 ClientboundPlayerInfoPacket
         if (majorLegacy >= 11903) {
-            packetHandler.sendPacket(player, NMSJ17.instance.createClientboundPlayerInfoUpdatePacket(uuid, gameProfile, GameProfileAction.initActions()))
+            packetHandler.sendPacket(player, NMS19.instance.createClientboundPlayerInfoUpdatePacket(uuid, gameProfile, GameProfileAction.initActions()))
         }
         // 1.17, 1.18, 1.19
         else if (isUniversal) {
@@ -68,7 +68,7 @@ class DefaultMinecraftEntityPlayerHandler : MinecraftEntityPlayerHandler {
         // 1.19.3
         // PacketPlayOutPlayerInfo 变更为 ClientboundPlayerInfoPacket
         if (majorLegacy >= 11903) {
-            packetHandler.sendPacket(player, NMSJ17.instance.createClientboundPlayerInfoRemovePacket(uuid))
+            packetHandler.sendPacket(player, NMS19.instance.createClientboundPlayerInfoRemovePacket(uuid))
         }
         // 1.17, 1.18, 1.19
         else if (isUniversal) {
