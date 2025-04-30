@@ -51,7 +51,7 @@ class DefaultAdyeshachEntityFinder : AdyeshachEntityFinder {
     }
 
     override fun getVisibleEntities(player: Player, filter: Predicate<EntityInstance>): List<EntityInstance> {
-        return getEntities(player) { it.isViewer(player) && it.getLocation().safeDistanceIgnoreY(player.location) <= it.visibleDistance && filter.test(it) }
+        return getEntities(player) { it.isVisibleViewer(player) && it.getLocation().safeDistanceIgnoreY(player.location) <= it.visibleDistance && filter.test(it) }
     }
 
     override fun getEntitiesFromId(id: String, player: Player?): List<EntityInstance> {

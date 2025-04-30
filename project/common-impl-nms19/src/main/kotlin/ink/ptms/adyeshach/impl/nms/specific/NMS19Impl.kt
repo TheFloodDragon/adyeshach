@@ -73,14 +73,14 @@ class NMS19Impl : NMS19() {
     override fun createBlockStateMeta(index: Int, materialData: MaterialData): Any {
         return NMSDataWatcherItem(
             NMSDataWatcherObject(index, DataWatcherRegistry.BLOCK_STATE),
-            CraftMagicNumbers20.getBlock(materialData)
+            CraftBlockData.newData(materialData.itemType, null).state
         )
     }
 
     override fun createOptBlockStateMeta(index: Int, materialData: MaterialData?): Any {
         return NMSDataWatcherItem(
             NMSDataWatcherObject(index, DataWatcherRegistry.OPTIONAL_BLOCK_STATE),
-            Optional.ofNullable(if (materialData == null) null else CraftMagicNumbers20.getBlock(materialData))
+            Optional.ofNullable(if (materialData == null) null else CraftBlockData.newData(materialData.itemType, null).state)
         )
     }
 
@@ -196,4 +196,4 @@ class NMS19Impl : NMS19() {
     }
 }
 
-typealias CraftMagicNumbers20 = org.bukkit.craftbukkit.v1_20_R3.util.CraftMagicNumbers
+typealias CraftBlockData = org.bukkit.craftbukkit.v1_20_R3.block.data.CraftBlockData

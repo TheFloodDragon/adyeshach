@@ -36,6 +36,7 @@ abstract class DefaultPainting(entityTypes: EntityTypes) : DefaultEntity(entityT
         val api = Adyeshach.api().getMinecraftAPI()
         return if (visible) {
             prepareSpawn(viewer) {
+                viewPlayers.visible += viewer.name
                 registerClientEntity(viewer)
                 api.getEntitySpawner().spawnEntityPainting(viewer, index, normalizeUniqueId, position.toLocation(), direction, painting)
             }

@@ -187,4 +187,9 @@ class DefaultMinecraftHelper : MinecraftHelper {
             false
         }
     }
+
+    override fun toMinecraft(entity: Entity): Any {
+        entity as CraftEntity9
+        return entity.handle
+    }
 }
