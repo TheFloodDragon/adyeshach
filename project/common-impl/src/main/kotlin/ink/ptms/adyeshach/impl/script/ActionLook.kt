@@ -7,6 +7,8 @@ import ink.ptms.adyeshach.impl.getEntities
 import ink.ptms.adyeshach.impl.getManager
 import ink.ptms.adyeshach.impl.isEntitySelected
 import org.bukkit.Location
+import org.bukkit.entity.Player
+import taboolib.common.util.isPlayer
 import taboolib.module.kether.KetherParser
 import taboolib.module.kether.combinationParser
 import taboolib.module.kether.script
@@ -25,8 +27,9 @@ private fun actionLook() = combinationParser {
             if (script.getManager() == null || !script.isEntitySelected()) {
                 errorBy("error-no-manager-or-entity-selected")
             }
+            val sender = if (script.sender?.isPlayer() == true) script.sender!!.cast<Player>() else null
             val entities = script.getEntities()
-            if (AdyeshachScriptEvent.Look(entities, smooth != null, x, y, z).call()) {
+            if (AdyeshachScriptEvent.Look(entities, sender, smooth != null, to as? Location, x, y, z).call()) {
                 if (smooth != null) {
                     submitRepeat(5) {
                         entities.forEach { e ->
