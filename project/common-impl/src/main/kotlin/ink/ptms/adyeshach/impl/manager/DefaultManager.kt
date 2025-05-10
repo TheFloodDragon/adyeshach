@@ -5,7 +5,7 @@ import ink.ptms.adyeshach.core.entity.TickService
 import ink.ptms.adyeshach.impl.DefaultAdyeshachAPI
 import org.bukkit.entity.Player
 import taboolib.platform.util.onlinePlayers
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.function.Predicate
 
 /**
@@ -17,7 +17,7 @@ import java.util.function.Predicate
  */
 open class DefaultManager : BaseManager() {
 
-    val activeEntity = CopyOnWriteArrayList<EntityInstance>()
+    val activeEntity = ConcurrentSkipListSet(Comparator.comparing(EntityInstance::uniqueId))
 
     override fun getPlayers(): List<Player> {
         return onlinePlayers

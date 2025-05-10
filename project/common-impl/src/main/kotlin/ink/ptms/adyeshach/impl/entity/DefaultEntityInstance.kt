@@ -34,8 +34,7 @@ import taboolib.common5.cbool
 import taboolib.common5.cdouble
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ConcurrentSkipListSet
 
 /**
  * Adyeshach
@@ -180,11 +179,11 @@ abstract class DefaultEntityInstance(entityType: EntityTypes = EntityTypes.ZOMBI
 
     /** 骑乘者 */
     @Expose
-    var passengers = CopyOnWriteArraySet<String>()
+    var passengers = ConcurrentSkipListSet<String>()
 
     /** 控制器 */
     @Expose
-    var controller = CopyOnWriteArrayList<Controller>()
+    var controller = ConcurrentSkipListSet(Comparator.comparing(Controller::id))
 
     /** Ady 的小脑 */
     override var brain: Brain = SimpleBrain(this)
@@ -417,11 +416,13 @@ abstract class DefaultEntityInstance(entityType: EntityTypes = EntityTypes.ZOMBI
         if (tag.containsKey(StandardTags.FORCE_TELEPORT)) {
             tag.remove(StandardTags.FORCE_TELEPORT)
         }
-        // 是否发生位置变更
+        // 如果坐标没变则不做处理
         else if (newPosition == position) {
             return
         }
-        // 切换世界
+        // 是否发生实质性位置变更
+        val isMoved = position.x != newPosition.x || position.y != newPosition.y || position.z != newPosition.z
+        // 是否切换世界
         if (position.world != newPosition.world) {
             position = newPosition
             despawn()
@@ -435,10 +436,13 @@ abstract class DefaultEntityInstance(entityType: EntityTypes = EntityTypes.ZOMBI
         } else {
             clientPosition = newPosition
         }
-        // 同步 passengers 位置
-        getPassengers().forEach { it.teleport(location) }
-        // 更新 passengers 信息
-        refreshPassenger()
+        // 只有在位置发生变更时才进行 passengers 同步
+        if (isMoved) {
+            // 同步 passengers 位置
+            getPassengers().forEach { it.teleport(location) }
+            // 更新 passengers 信息
+            refreshPassenger()
+        }
     }
 
     override fun setVelocity(vector: Vector) {

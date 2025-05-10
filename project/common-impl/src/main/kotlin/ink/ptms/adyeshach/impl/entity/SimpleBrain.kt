@@ -93,7 +93,6 @@ open class SimpleBrain(val entity: DefaultEntityInstance) : Brain {
         // 处理预加载控制器
         if (postponeAdd.isNotEmpty()) {
             entity.controller.addAll(postponeAdd)
-            entity.controller.sort()
         }
     }
 

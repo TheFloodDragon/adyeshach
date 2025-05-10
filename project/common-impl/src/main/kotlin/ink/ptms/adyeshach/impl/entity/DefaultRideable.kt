@@ -110,4 +110,11 @@ interface DefaultRideable : Rideable {
         this as DefaultEntityInstance
         forViewers { refreshPassenger(it) }
     }
+
+    override fun verifyPassenger() {
+        this as DefaultEntityInstance
+        val validPassengers = getPassengers()
+        passengers.clear()
+        passengers += validPassengers.map { it.uniqueId }
+    }
 }
