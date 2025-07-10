@@ -21,7 +21,7 @@ class DefaultMinecraftPacketHandler : MinecraftPacketHandler {
 
     val buffer = ConcurrentHashMap<Player, ConcurrentLinkedQueue<Any>>()
     val metaBuffer = ConcurrentHashMap<Player, ConcurrentLinkedQueue<BufferPacket>>()
-    val operator by unsafeLazy { Adyeshach.api().getMinecraftAPI().getEntityOperator() }
+    val metadataHandler by unsafeLazy { Adyeshach.api().getMinecraftAPI().getEntityMetadataHandler() }
 
     init {
         PacketSender.useMinecraftMethod()
@@ -51,9 +51,10 @@ class DefaultMinecraftPacketHandler : MinecraftPacketHandler {
             metaBuffer.remove(p)?.also { queue ->
                 if (queue.isNotEmpty()) {
                     // 在替换队列前处理当前队列内容
-                    queue.groupBy { it.id }.forEach { (id, packets) ->
-                        operator.updateEntityMetadata(p, id, packets.map { it.packet })
+                    val packets = queue.groupBy { it.id }.map { (id, packets) ->
+                        metadataHandler.createMetadataPacket(id, packets.map { it.packet })
                     }
+                    p.sendBundlePacket(packets)
                 }
             }
         }

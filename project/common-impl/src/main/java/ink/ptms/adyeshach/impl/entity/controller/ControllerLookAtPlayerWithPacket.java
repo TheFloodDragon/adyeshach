@@ -4,6 +4,9 @@ import com.google.gson.annotations.Expose;
 import ink.ptms.adyeshach.core.entity.EntityInstance;
 import ink.ptms.adyeshach.core.entity.StandardTags;
 import ink.ptms.adyeshach.core.entity.controller.Controller;
+import ink.ptms.adyeshach.core.entity.manager.event.ControllerLookEvent;
+import ink.ptms.adyeshach.core.util.YawFixerKt;
+import ink.ptms.adyeshach.impl.DefaultAdyeshachAPI;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -11,12 +14,36 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static ink.ptms.adyeshach.core.Adyeshach.*;
 
 /**
  * 让 NPC 通过数据包看向 "所有玩家"
  */
 public class ControllerLookAtPlayerWithPacket extends Controller {
+
+    public static final Map<String, Map<String, Angle>> LAST_LOOK_ANGLES = new ConcurrentHashMap<>();
+
+    public static class Angle {
+
+        public final double yaw;
+        public final double pitch;
+
+        public Angle(double yaw, double pitch) {
+            this.yaw = yaw;
+            this.pitch = pitch;
+        }
+
+        public double getYaw() {
+            return yaw;
+        }
+
+        public double getPitch() {
+            return pitch;
+        }
+    }
 
     @Expose
     protected final double lookDistance;
@@ -36,6 +63,22 @@ public class ControllerLookAtPlayerWithPacket extends Controller {
         super(entity);
         this.lookDistance = lookDistance;
         this.onlyHorizontal = onlyHorizontal;
+    }
+
+    /**
+     * 获取上次看向角度
+     * 
+     * @param entity 实体实例
+     * @param player 玩家
+     * @return 上次的角度，如果不存在则返回 null
+     */
+    @Nullable
+    public static Angle getLastLookAngle(EntityInstance entity, Player player) {
+        if (entity == null || player == null) {
+            return null;
+        }
+        Map<String, Angle> angles = LAST_LOOK_ANGLES.computeIfAbsent(player.getName(), k -> new ConcurrentHashMap<>());
+        return angles.get(entity.getUniqueId());
     }
 
     @NotNull
@@ -103,34 +146,38 @@ public class ControllerLookAtPlayerWithPacket extends Controller {
                 double distance = player.getLocation().distanceSquared(entity.getLocation());
                 if (distance <= lookDistance * lookDistance) {
                     Location entityLoc = entity.getEyeLocation();
-                    Location targetLoc = player.getEyeLocation();
+                    ControllerLookEvent event = new ControllerLookEvent(getEntity(), player, player.getEyeLocation());
+                    if (DefaultAdyeshachAPI.Companion.getLocalEventBus().callControllerLook(event)) {
+                        // 计算朝向向量
+                        Vector direction = event.getLookTarget().toVector().subtract(entityLoc.toVector());
 
-                    // 计算朝向向量
-                    Vector direction = targetLoc.toVector().subtract(entityLoc.toVector());
+                        // 计算 yaw 和 pitch
+                        double x = direction.getX();
+                        double y = direction.getY();
+                        double z = direction.getZ();
 
-                    // 计算 yaw 和 pitch
-                    double x = direction.getX();
-                    double y = direction.getY();
-                    double z = direction.getZ();
+                        // 计算 yaw (水平角度)
+                        double yaw = Math.toDegrees(Math.atan2(-x, z));
+                        // 计算 pitch (垂直角度)
+                        double pitch = Math.toDegrees(Math.asin(-y / direction.length()));
 
-                    // 计算 yaw (水平角度)
-                    double yaw = Math.toDegrees(Math.atan2(-x, z));
-                    // 计算 pitch (垂直角度)
-                    double pitch = Math.toDegrees(Math.asin(-y / direction.length()));
-
-                    // 如果只需要水平视角，将 pitch 设为 0
-                    if (onlyHorizontal) {
-                        pitch = 0;
+                        // 如果只需要水平视角，将 pitch 设为 0
+                        if (onlyHorizontal) {
+                            pitch = 0;
+                        }
+                        float fixYaw = YawFixerKt.fixYaw(entity.getEntityType(), (float) yaw);
+                        // 发送朝向更新包
+                        INSTANCE.api().getMinecraftAPI().getEntityOperator().updateEntityLook(
+                                player,
+                                entity.getIndex(),
+                                fixYaw,
+                                (float) pitch,
+                                true
+                        );
+                        // 记录最后的朝向角度
+                        LAST_LOOK_ANGLES.computeIfAbsent(player.getName(), k -> new ConcurrentHashMap<>())
+                                .put(entity.getUniqueId(), new Angle(yaw, pitch));
                     }
-
-                    // 发送朝向更新包
-                    INSTANCE.api().getMinecraftAPI().getEntityOperator().updateEntityLook(
-                            player,
-                            entity.getIndex(),
-                            (float) yaw,
-                            (float) pitch,
-                            true
-                    );
                 }
             }
         }
@@ -147,4 +194,4 @@ public class ControllerLookAtPlayerWithPacket extends Controller {
     public String toString() {
         return id() + ":" + String.format("%.2f", lookDistance) + "," + onlyHorizontal;
     }
-} 
+}

@@ -8,9 +8,7 @@ import ink.ptms.adyeshach.core.entity.TickService
 import ink.ptms.adyeshach.core.entity.manager.PlayerManager
 import ink.ptms.adyeshach.core.entity.path.PathFinderHandler
 import ink.ptms.adyeshach.core.entity.path.ResultNavigation
-import ink.ptms.adyeshach.core.util.encodePos
-import ink.ptms.adyeshach.core.util.ifloor
-import ink.ptms.adyeshach.core.util.plus
+import ink.ptms.adyeshach.core.util.*
 import ink.ptms.adyeshach.impl.ServerTours
 import ink.ptms.adyeshach.impl.manager.DefaultManagerHandler.playersInGameTick
 import ink.ptms.adyeshach.impl.util.ChunkAccess
@@ -228,7 +226,7 @@ fun DefaultEntityInstance.syncPosition() {
     if (hasPersistentTag(StandardTags.IS_IN_VEHICLE)) {
         // 是否需要更新视角
         if (updateRotation) {
-            operator.updateEntityLook(getVisiblePlayers(), index, yaw, pitch, true)
+            operator.updateEntityLook(getVisiblePlayers(), index, entityType.fixYaw(yaw), pitch, true)
         }
     } else {
         // 是否需要更新位置
@@ -241,7 +239,8 @@ fun DefaultEntityInstance.syncPosition() {
             val requireTeleport = x < -32768L || x > 32767L || y < -32768L || y > 32767L || z < -32768L || z > 32767L
             if (requireTeleport || clientPositionFixed + TimeUnit.SECONDS.toMillis(20) < System.currentTimeMillis()) {
                 clientPositionFixed = System.currentTimeMillis()
-                operator.teleportEntity(getVisiblePlayers(), index, clientPosition.toLocation(), !entityPathType.isFly())
+                val toLocation = clientPosition.toLocation().modify(yaw = entityType.fixYaw(clientPosition.yaw))
+                operator.teleportEntity(getVisiblePlayers(), index, toLocation, !entityPathType.isFly())
                 position = clientPosition
             } else {
                 val updatePosition = offset.lengthSquared() > 1E-6
@@ -249,14 +248,30 @@ fun DefaultEntityInstance.syncPosition() {
                     // 更新间隔
                     if (isIgnoredClientPositionUpdateInterval || clientPositionUpdateInterval.hasNext()) {
                         if (updateRotation) {
-                            operator.updateRelEntityMoveLook(getVisiblePlayers(), index, x.toShort(), y.toShort(), z.toShort(), yaw, pitch, !entityPathType.isFly())
+                            operator.updateRelEntityMoveLook(
+                                getVisiblePlayers(),
+                                index,
+                                x.toShort(),
+                                y.toShort(),
+                                z.toShort(),
+                                entityType.fixYaw(yaw),
+                                pitch,
+                                !entityPathType.isFly()
+                            )
                         } else {
-                            operator.updateRelEntityMove(getVisiblePlayers(), index, x.toShort(), y.toShort(), z.toShort(), !entityPathType.isFly())
+                            operator.updateRelEntityMove(
+                                getVisiblePlayers(),
+                                index,
+                                x.toShort(),
+                                y.toShort(),
+                                z.toShort(),
+                                !entityPathType.isFly()
+                            )
                         }
                         position = clientPosition
                     }
                 } else {
-                    operator.updateEntityLook(getVisiblePlayers(), index, yaw, pitch, !entityPathType.isFly())
+                    operator.updateEntityLook(getVisiblePlayers(), index, entityType.fixYaw(yaw), pitch, !entityPathType.isFly())
                     position = clientPosition
                 }
             }

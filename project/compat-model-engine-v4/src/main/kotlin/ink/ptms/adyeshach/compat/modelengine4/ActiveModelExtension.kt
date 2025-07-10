@@ -205,6 +205,7 @@ internal fun onEnd(e: AnimationEndEvent) {
 }
 
 internal fun ModelEngine.createModel() {
+    destroyModelEngine()
     // 获取配置
     val options = modelEngineOptions ?: ModelEngineOptions()
     // 创建模型对象
@@ -224,7 +225,7 @@ internal fun ModelEngine.createModel() {
     entity.isDetectingPlayers = false
     entity.bodyRotationController.yBodyRot = entity.location.yaw
     // 销毁原版实体
-    despawn()
+    // despawn()
     // 创建模型
     ModelEngineAPI.createModeledEntity(entity) { model ->
         model.isBaseEntityVisible = false
