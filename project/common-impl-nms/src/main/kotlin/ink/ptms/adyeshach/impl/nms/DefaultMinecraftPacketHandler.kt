@@ -22,7 +22,7 @@ class DefaultMinecraftPacketHandler : MinecraftPacketHandler {
     val buffer = ConcurrentHashMap<Player, ConcurrentLinkedQueue<Any>>()
     val metaBuffer = ConcurrentHashMap<Player, ConcurrentLinkedQueue<BufferPacket>>()
     val metadataHandler by unsafeLazy { Adyeshach.api().getMinecraftAPI().getEntityMetadataHandler() }
-
+    
     init {
         PacketSender.useMinecraftMethod()
     }
@@ -44,7 +44,10 @@ class DefaultMinecraftPacketHandler : MinecraftPacketHandler {
             // 处理普通数据包缓存
             buffer.remove(p)?.also { queue ->
                 if (queue.isNotEmpty()) {
-                    p.sendBundlePacket(queue.toList())
+                    val packets = queue.toList()
+                    packets.chunked(MAX_BATCH_SIZE).forEach { batch ->
+                        p.sendBundlePacket(batch)
+                    }
                 }
             }
             // 处理元数据缓存
@@ -54,7 +57,9 @@ class DefaultMinecraftPacketHandler : MinecraftPacketHandler {
                     val packets = queue.groupBy { it.id }.map { (id, packets) ->
                         metadataHandler.createMetadataPacket(id, packets.map { it.packet })
                     }
-                    p.sendBundlePacket(packets)
+                    packets.chunked(MAX_BATCH_SIZE).forEach { batch ->
+                        p.sendBundlePacket(batch)
+                    }
                 }
             }
         }
@@ -62,4 +67,9 @@ class DefaultMinecraftPacketHandler : MinecraftPacketHandler {
 
     /** 缓存数据包 */
     class BufferPacket(val id: Int, val packet: MinecraftMeta)
+
+    companion object {
+
+        private const val MAX_BATCH_SIZE = 1024
+    }
 }

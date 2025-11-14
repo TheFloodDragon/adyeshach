@@ -23,6 +23,13 @@ object StandardTags {
     const val DERIVED = "DERIVED"
 
     /**
+     * 不可编辑
+     * 不会触发 /npc edit 快速编辑
+     */
+    @PersistentTag
+    const val UNEDITABLE = "UNEDITABLE"
+
+    /**
      * 孤立单位
      * 持有该标签的单位不属于任何管理器
      */
@@ -77,6 +84,12 @@ object StandardTags {
     const val IS_IN_VEHICLE = "IS_IN_VEHICLE"
 
     /**
+     * Sit 状态
+     */
+    @PersistentTag
+    const val IS_SITTING = "IS_SITTING"
+
+    /**
      * 寻路状态
      * 持有该标签的单位正在寻路
      */
@@ -86,4 +99,9 @@ object StandardTags {
      * 下一次的传送将不会检查位置变更
      */
     const val FORCE_TELEPORT = "FORCE_TELEPORT"
+
+    /**
+     * 启用载具旋转跟随
+     */
+     const val ENABLE_VEHICLE_ROTATION = "ENABLE_VEHICLE_ROTATION"
 }

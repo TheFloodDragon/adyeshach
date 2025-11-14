@@ -27,6 +27,16 @@ interface Rideable {
     fun getVehicle(): EntityInstance?
 
     /**
+     * 获取载具缓存
+     */
+    fun getVehicleCache(): EntityInstance?
+
+    /**
+     * 是否有乘客
+     */
+    fun hasPassengers(): Boolean
+
+    /**
      * 获取骑乘者
      */
     fun getPassengers(): List<EntityInstance>

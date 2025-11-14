@@ -15,8 +15,7 @@ import taboolib.common5.Baffle
  * @author 坏黑
  * @since 2022/6/15 22:57
  */
-@Suppress("SpellCheckingInspection")
-interface EntityInstance : EntityBase, Controllable, GenericEntity, Rideable, Viewable {
+interface EntityInstance : EntityBase, Controllable, GenericEntity, Rideable, Viewable, TickService {
 
     /**
      * 实体序号，用于发包
@@ -64,11 +63,6 @@ interface EntityInstance : EntityBase, Controllable, GenericEntity, Rideable, Vi
     var moveTarget: Location?
 
     /**
-     * 载具位置同步
-     */
-    var vehicleSync: Long
-
-    /**
      * 是否启用客户端 ID 对应表
      */
     var useClientEntityMap: Boolean
@@ -88,6 +82,12 @@ interface EntityInstance : EntityBase, Controllable, GenericEntity, Rideable, Vi
      * 将优化大量实体生成时的性能
      */
     var isDisableVisibleEvent: Boolean
+
+    /**
+     * 是否在 Tick 中禁用载具检查
+     * 这将会提升性能
+     */
+    var isDisableVehicleCheckOnTick: Boolean
 
     /**
      * 取决于是否被公开的单位管理器管理
@@ -207,7 +207,7 @@ interface EntityInstance : EntityBase, Controllable, GenericEntity, Rideable, Vi
      * 发送客户端移动量数据包
      */
     @Deprecated("请使用 setVelocity(vector)", ReplaceWith("setVelocity(vector)"))
-    fun sendVelocity(vector: org.bukkit.util.Vector)
+    fun sendVelocity(vector: Vector)
 
     /**
      * 重新校准位置

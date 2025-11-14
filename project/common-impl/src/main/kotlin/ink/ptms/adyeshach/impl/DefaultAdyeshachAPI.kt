@@ -11,7 +11,9 @@ import taboolib.common.platform.PlatformFactory
 import taboolib.common.platform.function.submitAsync
 import taboolib.common.platform.function.warning
 import taboolib.common.util.t
+import taboolib.platform.util.PlayerSessionMap
 import taboolib.platform.util.removeMeta
+import taboolib.platform.util.safely
 import taboolib.platform.util.setMeta
 import java.util.concurrent.ConcurrentHashMap
 
@@ -94,10 +96,8 @@ class DefaultAdyeshachAPI : AdyeshachAPI {
             // 公共管理器
             getPublicEntityManager(ManagerType.PERSISTENT).getEntities().forEach { it.removeViewer(player) }
             getPublicEntityManager(ManagerType.TEMPORARY).getEntities().forEach { it.removeViewer(player) }
-            // 异步卸载私有管理器
-            submitAsync(now = !async) { getPrivateEntityManager(player, ManagerType.TEMPORARY).onDisable() }
             // 移除缓存
-            playerEntityTemporaryManagerMap.remove(player.name)
+            playerEntityTemporaryManagerMap.remove(player)
         } else {
             // 重复执行警告
             warning(
@@ -130,9 +130,17 @@ class DefaultAdyeshachAPI : AdyeshachAPI {
     }
 
     override fun getPrivateEntityManager(player: Player, type: ManagerType): BaseManager {
+        if (!player.isOnline) {
+            error(
+                """
+                    玩家 ${player.name} 不是在线状态，无法获取其私有实体管理器。
+                    Player ${player.name} is not online, cannot get its private entity manager.
+                """.trimIndent()
+            )
+        }
         return when (type) {
             ManagerType.ISOLATED -> IsolatedPlayerManager(player)
-            ManagerType.TEMPORARY -> playerEntityTemporaryManagerMap.computeIfAbsent(player.name) { DefaultPlayerManager(player) }
+            ManagerType.TEMPORARY -> playerEntityTemporaryManagerMap.getOrCreate(player.uniqueId) { DefaultPlayerManager(player) }!!
             else -> error(
                 """
                     不支持该类型的管理器: $type
@@ -189,7 +197,7 @@ class DefaultAdyeshachAPI : AdyeshachAPI {
     companion object {
 
         /** 玩家单位管理器（临时） **/
-        val playerEntityTemporaryManagerMap = ConcurrentHashMap<String, DefaultPlayerManager>()
+        val playerEntityTemporaryManagerMap = PlayerSessionMap<DefaultPlayerManager>()
 
         /** 事件总线 */
         val localEventBus = DefaultEventBus()

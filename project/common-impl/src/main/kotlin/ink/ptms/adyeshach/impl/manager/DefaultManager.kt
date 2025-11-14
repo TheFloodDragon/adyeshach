@@ -1,7 +1,6 @@
 package ink.ptms.adyeshach.impl.manager
 
 import ink.ptms.adyeshach.core.entity.EntityInstance
-import ink.ptms.adyeshach.core.entity.TickService
 import ink.ptms.adyeshach.impl.DefaultAdyeshachAPI
 import org.bukkit.entity.Player
 import taboolib.platform.util.onlinePlayers
@@ -71,11 +70,15 @@ open class DefaultManager : BaseManager() {
         activeEntity.forEach { it.despawn() }
     }
 
+    override fun checkVisible() {
+        activeEntity.forEach { it.checkVisible() }
+    }
+
     override fun onTick() {
         // 处理列表
         activeEntity.forEach {
-            // 实体受 Tick 服务影响 && 事件处理
-            if (it is TickService && DefaultAdyeshachAPI.localEventBus.callTick(it)) {
+            // 事件处理
+            if (DefaultAdyeshachAPI.localEventBus.callTick(it)) {
                 it.onTick()
             }
         }
