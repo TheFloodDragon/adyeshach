@@ -68,15 +68,16 @@ abstract class DefaultHuman(entityTypes: EntityTypes) : DefaultEntityLiving(enti
         }
 
     override fun visible(viewer: Player, visible: Boolean): Boolean {
+        // 伴生实体禁止外部直接操作可见性
+        if (isCompanion()) return false
+        return handleVisibleInternal(viewer, visible)
+    }
+
+    override fun handleVisibleInternal(viewer: Player, visible: Boolean): Boolean {
         return if (visible) {
             prepareSpawn(viewer) {
-                viewPlayers.visible += viewer.name
                 // 创建玩家信息
                 addPlayerInfo(viewer)
-                // 创建客户端对应表
-                registerClientEntity(viewer)
-                // 添加到可见实体索引
-                updateVisibleEntityIndex(viewer, true)
                 // 生成实体
                 Adyeshach.api().getMinecraftAPI().getEntitySpawner().spawnNamedEntity(viewer, index, pid, position.toLocation())
                 // 启用皮肤
@@ -98,17 +99,16 @@ abstract class DefaultHuman(entityTypes: EntityTypes) : DefaultEntityLiving(enti
             }
         } else {
             prepareDestroy(viewer) {
-                viewPlayers.visible -= viewer.name
-                // 从可见实体索引中移除
-                updateVisibleEntityIndex(viewer, false)
                 // 移除玩家信息
                 removePlayerInfo(viewer)
                 // 销毁实体
                 Adyeshach.api().getMinecraftAPI().getEntityOperator().destroyEntity(viewer, index)
-                // 移除客户端对应表
-                unregisterClientEntity(viewer)
             }
         }
+    }
+
+    override fun handleCompanionVisible(viewer: Player, visible: Boolean) {
+        handleVisibleInternal(viewer, visible)
     }
 
     @Suppress("SpellCheckingInspection")

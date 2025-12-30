@@ -21,13 +21,14 @@ import taboolib.common.platform.function.submit
 abstract class DefaultItem(entityTypes: EntityTypes) : DefaultEntity(entityTypes), AdyItem {
 
     override fun visible(viewer: Player, visible: Boolean): Boolean {
+        // 伴生实体禁止外部直接操作可见性
+        if (isCompanion()) return false
+        return handleVisibleInternal(viewer, visible)
+    }
+
+    override fun handleVisibleInternal(viewer: Player, visible: Boolean): Boolean {
         return if (visible) {
             prepareSpawn(viewer) {
-                viewPlayers.visible += viewer.name
-                // 创建客户端对应表
-                registerClientEntity(viewer)
-                // 添加到可见实体索引
-                updateVisibleEntityIndex(viewer, true)
                 // 修正掉落物信息
                 setMetadata("item", getItem())
                 // 生成实体
@@ -40,15 +41,14 @@ abstract class DefaultItem(entityTypes: EntityTypes) : DefaultEntity(entityTypes
             }
         } else {
             prepareDestroy(viewer) {
-                viewPlayers.visible -= viewer.name
-                // 从可见实体索引中移除
-                updateVisibleEntityIndex(viewer, false)
                 // 销毁实体
                 Adyeshach.api().getMinecraftAPI().getEntityOperator().destroyEntity(viewer, index)
-                // 移除客户端对应表
-                unregisterClientEntity(viewer)
             }
         }
+    }
+
+    override fun handleCompanionVisible(viewer: Player, visible: Boolean) {
+        handleVisibleInternal(viewer, visible)
     }
 
     override fun setItem(itemStack: ItemStack) {

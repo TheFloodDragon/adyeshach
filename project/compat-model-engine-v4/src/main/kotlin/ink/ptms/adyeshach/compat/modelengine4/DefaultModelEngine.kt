@@ -1,6 +1,7 @@
 package ink.ptms.adyeshach.compat.modelengine4
 
 import com.ticxo.modelengine.api.ModelEngineAPI
+import com.ticxo.modelengine.api.animation.BlueprintAnimation
 import com.ticxo.modelengine.api.model.bone.BoneBehaviorTypes
 import com.ticxo.modelengine.v1_20_R3.NMSHandler_v1_20_R3
 import ink.ptms.adyeshach.core.Adyeshach
@@ -13,6 +14,8 @@ import org.bukkit.entity.Player
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.util.unsafeLazy
+import java.util.UUID
+import java.util.function.Consumer
 
 
 /**
@@ -22,7 +25,21 @@ import taboolib.common.util.unsafeLazy
  * @author 坏黑
  * @since 2022/6/19 21:58
  */
+@Suppress("UNCHECKED_CAST")
 internal interface DefaultModelEngine : ModelEngine {
+
+    // 回调函数列表
+    private val modelCreateHandlers: List<Consumer<UUID>>
+        get() {
+            this as DefaultEntityInstance
+            return getTag("ModelEngine:CreateHandlers") as? List<Consumer<UUID>> ?: emptyList()
+        }
+
+    private val modelDestroyHandlers: List<Consumer<UUID>>
+        get() {
+            this as DefaultEntityInstance
+            return getTag("ModelEngine:DestroyHandlers") as? List<Consumer<UUID>> ?: emptyList()
+        }
 
     override fun showModelEngine(viewer: Player): Boolean {
         if (isModelEngineHooked && modelEngineName.isNotBlank()) {
@@ -54,8 +71,11 @@ internal interface DefaultModelEngine : ModelEngine {
     override fun destroyModelEngine() {
         if (isModelEngineHooked && modelEngineUniqueId != null) {
             this as DefaultEntityInstance
-            ModelEngineAPI.removeModeledEntity(modelEngineUniqueId)
+            val uuid = modelEngineUniqueId!!
+            ModelEngineAPI.removeModeledEntity(uuid)
             modelEngineUniqueId = null
+            // 触发销毁回调
+            modelDestroyHandlers.forEach { it.accept(uuid) }
         }
     }
 
@@ -94,6 +114,64 @@ internal interface DefaultModelEngine : ModelEngine {
     }
 
     override fun hurt() {
+    }
+
+    override fun restoreAnimationState() {
+        if (isModelEngineHooked) {
+            this as DefaultEntityInstance
+            // 获取所有以 "ModelEngine:Animation:" 开头的持久化标签
+            getPersistentTags().forEach { (key, value) ->
+                if (key.startsWith("ModelEngine:Animation:")) {
+                    val modelId = key.substringAfter("ModelEngine:Animation:")
+                    val state = AnimationState.deserialize(value) ?: return@forEach
+                    // 还原动画播放
+                    val loopMode = try {
+                        BlueprintAnimation.LoopMode.valueOf(state.loopMode)
+                    } catch (_: Exception) {
+                        BlueprintAnimation.LoopMode.HOLD
+                    }
+                    playAnimation(
+                        modelId = modelId,
+                        animationId = state.animationId,
+                        lerpIn = state.lerpIn,
+                        lerpOut = state.lerpOut,
+                        speed = state.speed,
+                        isForceChange = false,
+                        isForceOverride = state.isForceOverride,
+                        loopMode = loopMode,
+                        priority = state.priority
+                    )
+                }
+            }
+        }
+    }
+
+    override fun clearAnimationState() {
+        this as DefaultEntityInstance
+        // 清除所有动画状态
+        getPersistentTags().forEach { (key, _) ->
+            if (key.startsWith("ModelEngine:Animation:")) {
+                removePersistentTag(key)
+            }
+        }
+    }
+
+    override fun onModelCreate(handler: Consumer<UUID>) {
+        this as DefaultEntityInstance
+        val newHandlers = modelCreateHandlers.toMutableList()
+        newHandlers += handler
+        setTag("ModelEngine:CreateHandlers", newHandlers)
+    }
+
+    override fun onModelDestroy(handler: Consumer<UUID>) {
+        this as DefaultEntityInstance
+        val newHandlers = modelDestroyHandlers.toMutableList()
+        newHandlers += handler
+        setTag("ModelEngine:DestroyHandlers", newHandlers)
+    }
+
+    fun triggerModelCreateCallbacks(uuid: UUID) {
+        modelCreateHandlers.forEach { it.accept(uuid) }
     }
 
     companion object {

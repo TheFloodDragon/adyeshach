@@ -37,9 +37,12 @@ open class LocalPersistentManager : DefaultManager() {
         }
         // 关联实体合法性验证
         activeEntity.forEach { it.verifyPassenger() }
+        // 伴生实体合法性验证
+        activeEntity.forEach { it.verifyCompanion() }
     }
 
     override fun onSave() {
+        if (AdyeshachSettings.disableSave) return
         activeEntity.forEach { entity ->
             // 不再保存衍生单位
             if (entity.isDerived()) {
